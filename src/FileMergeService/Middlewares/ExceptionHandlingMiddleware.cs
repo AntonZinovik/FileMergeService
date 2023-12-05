@@ -3,6 +3,8 @@
 using System.Net;
 using System.Text.Json;
 
+using FileTransferService.Exceptions;
+
 /// <summary>
 ///  Промежуточный слой для обработки ошибок.
 /// </summary>
@@ -37,6 +39,13 @@ public class ExceptionHandlingMiddleware
         {
             await _next(httpContext);
         }
+        catch (HashCodeException exception)
+        {
+            await HandleExceptionAsync(httpContext,
+                exception.Message,
+                HttpStatusCode.BadRequest,
+                "Хэш-суммы файлов не равны.");
+        }
         catch (Exception exception)
         {
             await HandleExceptionAsync(httpContext,
@@ -66,9 +75,9 @@ public class ExceptionHandlingMiddleware
         var result = JsonSerializer.Serialize(new
         {
             StatusCode = (int)httpStatusCode,
-            ErrorMessage = message
+            Message = message
         });
 
-        await response.WriteAsJsonAsync(result);
+        await response.WriteAsync(result);
     }
 }

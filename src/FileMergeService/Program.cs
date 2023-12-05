@@ -1,6 +1,9 @@
 using System.Reflection;
 
 using FileMergeService.Middlewares;
+using FileMergeService.Options;
+using FileMergeService.Services.Implementations;
+using FileMergeService.Services.Interfaces;
 
 using Microsoft.OpenApi.Models;
 
@@ -29,6 +32,10 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom
                                                                  .Configuration(context.Configuration));
+
+builder.Services.Configure<FilesOptions>(builder.Configuration.GetSection(nameof(FileOptions)));
+
+builder.Services.AddTransient<IFileService, FileService>();
 
 var app = builder.Build();
 
