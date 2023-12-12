@@ -1,9 +1,8 @@
-﻿namespace FileTransferService.Exceptions;
+﻿namespace FileMergeService.Exceptions;
 
 /// <summary>
 /// Класс ошибки при сравнении хэш-сумм.
 /// </summary>
-[Serializable]
 public class HashCodeException : Exception
 {
     /// <inheritdoc cref="HashCodeException"/>
@@ -24,7 +23,7 @@ public class HashCodeException : Exception
     /// <inheritdoc cref="HashCodeException"/>
     /// </summary>
     /// <param name="message">Сообщение ошибки.</param>
-    /// <param name="inner">Ошибка.</param>
+    /// <param name="inner">Внутренняя ошибка..</param>
     public HashCodeException(string message, Exception inner)
         : base(message, inner)
     {

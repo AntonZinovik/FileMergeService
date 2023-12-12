@@ -33,7 +33,9 @@ builder.Services.AddSwaggerGen(options =>
 builder.Host.UseSerilog((context, configuration) => configuration.ReadFrom
                                                                  .Configuration(context.Configuration));
 
-builder.Services.Configure<FilesOptions>(builder.Configuration.GetSection(nameof(FileOptions)));
+builder.Services.AddOptions<FilesOptions>().Bind(builder.Configuration.GetSection(nameof(FileOptions)))
+       .ValidateDataAnnotations()
+       .ValidateOnStart();
 
 builder.Services.AddTransient<IFileService, FileService>();
 

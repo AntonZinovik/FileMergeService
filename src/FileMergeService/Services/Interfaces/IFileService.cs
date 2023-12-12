@@ -12,12 +12,12 @@ public interface IFileService
     /// </summary>
     /// <param name="fileDto">Дто исходного файла.</param>
     /// <param name="cancellationToken">Токен отмены выполнения операции.</param>
-    Task MergeFile(FileDto fileDto, CancellationToken cancellationToken);
+    Task MergeFileAsync(FileDto fileDto, CancellationToken cancellationToken);
 
     /// <summary>
     /// Сохранить чанк.
     /// </summary>
     /// <param name="chunkDto">Дто чанка.</param>
     /// <param name="cancellationToken">Токен отмены выполнения операции.</param>
-    Task SaveAsync(ChunkDto chunkDto, CancellationToken cancellationToken);
+    Task SaveChunkAsync(ChunkDto chunkDto, CancellationToken cancellationToken);
 }

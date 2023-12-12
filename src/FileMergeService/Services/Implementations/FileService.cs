@@ -3,18 +3,18 @@
 using System.IO.Compression;
 
 using FileMergeService.Dtos;
+using FileMergeService.Exceptions;
 using FileMergeService.Extensions;
 using FileMergeService.Options;
 using FileMergeService.Services.Interfaces;
 
-using FileTransferService.Exceptions;
-
 using Microsoft.Extensions.Options;
 
+/// <inheritdoc cref="IFileService"/>
 public class FileService : IFileService
 {
     /// <summary>
-    /// Настройки файлов.
+    /// <inheritdoc cref="FilesOptions"/>
     /// </summary>
     private readonly FilesOptions _filesOptions;
 
@@ -25,30 +25,33 @@ public class FileService : IFileService
 
     /// <inheritdoc cref="IFileService"/>
     /// <param name="logger">Логгер.</param>
-    /// <param name="splitOptions">Настройки файлов.</param>
-    public FileService(ILogger<FileService> logger, IOptions<FilesOptions> splitOptions)
+    /// <param name="filesOptions">Настройки файлов.</param>
+    public FileService(ILogger<FileService> logger, IOptions<FilesOptions> filesOptions)
     {
         _logger = logger;
 
-        _filesOptions = splitOptions.Value;
-
-        if (string.IsNullOrEmpty(_filesOptions.PathChunkDirectory))
-        {
-            throw new ArgumentNullException("Указанны некоректные настройки файлов");
-        }
+        _filesOptions = filesOptions.Value;
     }
 
-    /// <inheritdoc cref="IFileService.MergeFile"/>
-    public async Task MergeFile(FileDto fileDto, CancellationToken cancellationToken)
+    /// <inheritdoc cref="IFileService.MergeFileAsync"/>
+    public async Task MergeFileAsync(FileDto fileDto, CancellationToken cancellationToken)
     {
-        // Сортируем все чанки в правильном порядке
-        var chunks = Directory.GetFiles(_filesOptions.PathChunkDirectory!)
-                              .OrderBy(x => int.Parse(Path.GetFileNameWithoutExtension(x)));
+        var pathToDirectory = Path.Combine(_filesOptions.PathChunkDirectory!,
+            Path.GetFileNameWithoutExtension(fileDto.FileName));
+
+        if (!Directory.Exists(pathToDirectory))
+        {
+            throw new NullReferenceException("Не существует папки с частями указанного файла.");
+        }
+
+        var chunks = Directory.GetFiles(pathToDirectory)
+                              .OrderBy(chunk => int.Parse(Path.GetFileNameWithoutExtension(chunk)));
         var pathToFinalFile = Path.Combine(_filesOptions.PathFileDirectory!, fileDto.FileName);
 
+        _logger.LogInformation("Создан файл:{FileName}",fileDto.FileName);
+        
         await using var fileStream = File.Open(pathToFinalFile, FileMode.OpenOrCreate);
 
-        // Перекладываем всё в него
         foreach (var chunk in chunks)
         {
             await using var zipFileStream = File.Open(chunk, FileMode.Open);
@@ -61,9 +64,9 @@ public class FileService : IFileService
 
         var savedHashCode = await fileStream.CalculationHashCodeAsync();
 
-        var result = fileDto.HashCode.SequenceEqual(savedHashCode);
+        var areHashCodesEquals = fileDto.HashCode.SequenceEqual(savedHashCode);
 
-        if (!result)
+        if (!areHashCodesEquals)
         {
             fileStream.Close();
             File.Delete(pathToFinalFile);
@@ -71,10 +74,17 @@ public class FileService : IFileService
         }
     }
 
-    /// <inheritdoc cref="IFileService.SaveAsync"/>
-    public async Task SaveAsync(ChunkDto chunkDto, CancellationToken cancellationToken)
+    /// <inheritdoc cref="IFileService.SaveChunkAsync"/>
+    public async Task SaveChunkAsync(ChunkDto chunkDto, CancellationToken cancellationToken)
     {
-        var pathToFile = Path.Combine(_filesOptions.PathChunkDirectory!, chunkDto.FileName);
+        var pathToDirectory = Path.Combine(_filesOptions.PathChunkDirectory!, chunkDto.FileName);
+
+        if (!Directory.Exists(pathToDirectory))
+        {
+            Directory.CreateDirectory(pathToDirectory);
+        }
+
+        var pathToFile = Path.Combine(pathToDirectory, chunkDto.ChunkName);
         await using var fileStream = File.Create(pathToFile, chunkDto.Bytes.Length);
 
         using var stream = new MemoryStream(chunkDto.Bytes);
@@ -83,9 +93,9 @@ public class FileService : IFileService
 
         var savedHashCode = await fileStream.CalculationHashCodeAsync();
 
-        var result = chunkDto.HashCode.SequenceEqual(savedHashCode);
+        var areHashCodesEquals = chunkDto.HashCode.SequenceEqual(savedHashCode);
 
-        if (!result)
+        if (!areHashCodesEquals)
         {
             File.Delete(pathToFile);
             throw new HashCodeException("Хеш-суммы файлов не равны");

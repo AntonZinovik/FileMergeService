@@ -3,10 +3,10 @@
 using System.Net;
 using System.Text.Json;
 
-using FileTransferService.Exceptions;
+using FileMergeService.Exceptions;
 
 /// <summary>
-///  Промежуточный слой для обработки ошибок.
+/// Промежуточный слой для обработки ошибок.
 /// </summary>
 public class ExceptionHandlingMiddleware
 {
@@ -39,6 +39,13 @@ public class ExceptionHandlingMiddleware
         {
             await _next(httpContext);
         }
+        catch (NullReferenceException exception)
+        {
+            await HandleExceptionAsync(httpContext,
+                exception.Message,
+                HttpStatusCode.NotFound,
+                "Не существует указанной папки");
+        }
         catch (HashCodeException exception)
         {
             await HandleExceptionAsync(httpContext,
@@ -56,7 +63,7 @@ public class ExceptionHandlingMiddleware
     }
 
     /// <summary>
-    ///  Метод обработки исключений.
+    /// Метод обработки исключений.
     /// </summary>
     /// <param name="httpContext">HttpContext запроса.</param>
     /// <param name="exceptionMessage">Сообщение ошибки для логгера.</param>

@@ -6,7 +6,7 @@ using FileMergeService.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 /// <summary>
-/// Котроллер для работы с файлами.
+/// Контроллер для работы с файлами.
 /// </summary>
 [ApiController]
 [Route("[controller]")]
@@ -33,13 +33,14 @@ public class FilesController : ControllerBase
     /// Объединение частей файла.
     /// </summary>
     /// <param name="fileDto">Дто исходного файла.</param>
-    /// <param name="cancellationToken">CancellationToken cancellationToken</param>
+    /// <param name="cancellationToken">Токен отмены выполнения операции.</param>
     /// <response code="204">Когда удалось объединить файл.</response>
     /// <response code="400">Когда хеш-суммы файлов разные.</response>
     [HttpPost("Merge")]
-    public async Task<IActionResult> Merge([FromBody] FileDto fileDto, CancellationToken cancellationToken)
+    public async Task<NoContentResult> MergeAsync([FromBody] FileDto fileDto, CancellationToken cancellationToken)
     {
-        await _fileService.MergeFile(fileDto, cancellationToken);
+        _logger.LogInformation("Начался процесс объединения файла {FileName}", fileDto.FileName);
+        await _fileService.MergeFileAsync(fileDto, cancellationToken);
 
         return NoContent();
     }
@@ -51,9 +52,10 @@ public class FilesController : ControllerBase
     /// <param name="cancellationToken">Токен отмены выполнения операции.</param>
     /// <response code="204">Когда удалось объединить файл.</response>
     [HttpPost("Save")]
-    public async Task<IActionResult> Save([FromBody] ChunkDto chunkDto, CancellationToken cancellationToken)
+    public async Task<NoContentResult> SaveAsync([FromBody] ChunkDto chunkDto, CancellationToken cancellationToken)
     {
-        await _fileService.SaveAsync(chunkDto, cancellationToken);
+        await _fileService.SaveChunkAsync(chunkDto, cancellationToken);
+
         return NoContent();
     }
 }
