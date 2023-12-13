@@ -3,8 +3,10 @@
 using System.Net;
 using System.Text.Json;
 
+using FileMergeService.Exceptions;
+
 /// <summary>
-///  Промежуточный слой для обработки ошибок.
+/// Промежуточный слой для обработки ошибок.
 /// </summary>
 public class ExceptionHandlingMiddleware
 {
@@ -37,6 +39,20 @@ public class ExceptionHandlingMiddleware
         {
             await _next(httpContext);
         }
+        catch (NullReferenceException exception)
+        {
+            await HandleExceptionAsync(httpContext,
+                exception.Message,
+                HttpStatusCode.NotFound,
+                "Не существует указанной папки");
+        }
+        catch (HashCodeException exception)
+        {
+            await HandleExceptionAsync(httpContext,
+                exception.Message,
+                HttpStatusCode.BadRequest,
+                "Хэш-суммы файлов не равны.");
+        }
         catch (Exception exception)
         {
             await HandleExceptionAsync(httpContext,
@@ -47,7 +63,7 @@ public class ExceptionHandlingMiddleware
     }
 
     /// <summary>
-    ///  Метод обработки исключений.
+    /// Метод обработки исключений.
     /// </summary>
     /// <param name="httpContext">HttpContext запроса.</param>
     /// <param name="exceptionMessage">Сообщение ошибки для логгера.</param>
@@ -66,9 +82,9 @@ public class ExceptionHandlingMiddleware
         var result = JsonSerializer.Serialize(new
         {
             StatusCode = (int)httpStatusCode,
-            ErrorMessage = message
+            Message = message
         });
 
-        await response.WriteAsJsonAsync(result);
+        await response.WriteAsync(result);
     }
 }
