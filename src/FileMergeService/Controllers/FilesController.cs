@@ -40,6 +40,8 @@ public class FilesController : ControllerBase
     public async Task<NoContentResult> MergeAsync([FromBody] FileDto fileDto, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Начался процесс объединения файла {FileName}", fileDto.FileName);
+        
+        cancellationToken.ThrowIfCancellationRequested();
         await _fileService.MergeFileAsync(fileDto, cancellationToken);
 
         return NoContent();
@@ -54,6 +56,7 @@ public class FilesController : ControllerBase
     [HttpPost("Save")]
     public async Task<NoContentResult> SaveAsync([FromBody] ChunkDto chunkDto, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         await _fileService.SaveChunkAsync(chunkDto, cancellationToken);
 
         return NoContent();

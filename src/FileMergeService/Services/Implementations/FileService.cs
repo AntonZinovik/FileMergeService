@@ -36,6 +36,8 @@ public class FileService : IFileService
     /// <inheritdoc cref="IFileService.MergeFileAsync"/>
     public async Task MergeFileAsync(FileDto fileDto, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        
         var pathToDirectory = Path.Combine(_filesOptions.PathChunkDirectory!,
             Path.GetFileNameWithoutExtension(fileDto.FileName));
 
@@ -77,6 +79,8 @@ public class FileService : IFileService
     /// <inheritdoc cref="IFileService.SaveChunkAsync"/>
     public async Task SaveChunkAsync(ChunkDto chunkDto, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
+        
         var pathToDirectory = Path.Combine(_filesOptions.PathChunkDirectory!, chunkDto.FileName);
 
         if (!Directory.Exists(pathToDirectory))
