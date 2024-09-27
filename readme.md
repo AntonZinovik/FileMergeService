@@ -1,4 +1,4 @@
-# FIle Transfer Service
+# FIle Merge Service
 
 [![Build](https://github.com/AntonZinovik/FileMergeService/actions/workflows/Build.yml/badge.svg?branch=main)](https://github.com/AntonZinovik/FileMergeService/actions/workflows/Build.yml)
 
